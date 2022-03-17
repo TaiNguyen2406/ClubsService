@@ -35,13 +35,13 @@ namespace ClubsService.Controllers
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        [ProducesResponseType(StatusCodes.Status404NotFound)]
         [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> CreateClub([FromBody] CreateUpdateClubDto data)
         {
             var check = int.TryParse(Request.Headers["Player-Id"].ToString(), out int memberId);
             if (!check)
             {
+                _logger.LogError($"Player-Id is missing");
                 throw new Exception($"Player-Id is missing");
             }
             var member = IsMemberExist(memberId);
@@ -55,11 +55,6 @@ namespace ClubsService.Controllers
                 Name = data.Name
             };
             var result = await _clubRepository.CreateClub(club);
-
-            if (result == null)
-            {
-                return NotFound();
-            }
             member.ClubId = result.Id;
             await _memberRepository.UpdateMember(member);
             return CreatedAtAction(nameof(CreateClub), result);
@@ -81,6 +76,7 @@ namespace ClubsService.Controllers
             var club = _clubRepository.GetClub(clubId);
             if (club == null)
             {
+                _logger.LogError($"Not found club with id {clubId}");
                 throw new Exception($"Not found club with id {clubId}");
             }
             return club;
@@ -91,6 +87,7 @@ namespace ClubsService.Controllers
             var member = _memberRepository.GetMember(memberId);
             if (member == null)
             {
+                _logger.LogError($"Not found member with id {memberId}");
                 throw new Exception($"Not found member with id {memberId}");
             }
             return member;

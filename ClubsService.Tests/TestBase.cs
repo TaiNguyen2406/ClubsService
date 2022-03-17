@@ -5,16 +5,25 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using System;
 
 namespace ClubsService.Tests
 {
     internal class TestBase : WebApplicationFactory<Program>
     {
         private readonly string _environment;
-
+        public Guid _seedClubId;
+        public string _seedClubName;
+        public Member _seedMember1;
+        public Member _seedMember2;
+        public  ClubsDbContext _dbContext;
         public TestBase(string environment = "Development")
         {
             _environment = environment;
+            _seedClubId = Guid.NewGuid();
+            _seedClubName = "Seed Club";
+            _seedMember1 = new Member { Id = 1, Name = "Test1" };
+            _seedMember2 = new Member { Id = 2, Name = "Test2" };
         }
 
         protected override IHost CreateHost(IHostBuilder builder)
@@ -36,20 +45,21 @@ namespace ClubsService.Tests
                 using (var scope = sp.CreateScope())
                 {
                     var scopedServices = scope.ServiceProvider;
-                    var db = scopedServices.GetRequiredService<ClubsDbContext>();
-                    if (db.Database.ProviderName != "Microsoft.EntityFrameworkCore.InMemory")
-                        db.Database.Migrate();
-                    CreateTestData(db);
+                    _dbContext = scopedServices.GetRequiredService<ClubsDbContext>();
+                    CreateTestData();
                 }
             });
-          
+
             return base.CreateHost(builder);
         }
 
-        private void CreateTestData(ClubsDbContext clubsDbContext)
+        private void CreateTestData()
         {
-            clubsDbContext.Members.Add(new Member { Id = 1, Name = "Test1" });
-            clubsDbContext.Members.Add(new Member { Id = 2, Name = "Test2" });
+            _dbContext.Database.EnsureDeleted();
+            _dbContext.Members.Add(_seedMember1);
+            _dbContext.Members.Add(_seedMember2);
+            _dbContext.Clubs.Add(new Club { Id = _seedClubId, Name = _seedClubName });
+            _dbContext.SaveChanges();
         }
     }
 }
