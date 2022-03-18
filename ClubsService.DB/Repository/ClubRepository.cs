@@ -16,11 +16,25 @@ namespace ClubsService.DB.Repository
             _dbContext = dbContext;
         }
 
-        public async Task<Club> CreateClub(Club club)
+        public async Task<Club> CreateClub(Club club, Member member)
         {
-            _dbContext.Add(club);
-            await _dbContext.SaveChangesAsync();
+            using var transaction = _dbContext.Database.BeginTransaction();
+            try
+            {
+
+                _dbContext.Add(club);
+                member.ClubId = club.Id;
+                _dbContext.Members.Update(member);
+                await _dbContext.SaveChangesAsync();
+                transaction.Commit();
+            }
+            catch (Exception)
+            {
+                transaction.Rollback();
+            }
+
             return GetClub(club.Id);
+
         }
 
         public Club GetClub(Guid id)

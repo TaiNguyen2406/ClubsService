@@ -1,4 +1,5 @@
 using ClubsService.DB;
+using ClubsService.Publisher;
 using Microsoft.EntityFrameworkCore;
 using Polly;
 using Serilog;
@@ -22,6 +23,7 @@ services.AddHealthChecks();
 var httpRetryPolicy = Policy.HandleResult<HttpResponseMessage>(r => !r.IsSuccessStatusCode)
     .WaitAndRetryAsync(5, retryAttempt => TimeSpan.FromSeconds(retryAttempt));
 services.AddSingleton<IAsyncPolicy<HttpResponseMessage>>(httpRetryPolicy);
+services.AddScoped<IAddClubPublisher, AddClubPublisher>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.

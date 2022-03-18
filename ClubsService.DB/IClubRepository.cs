@@ -11,6 +11,6 @@ namespace ClubsService.DB
     {
         Club GetClub(Guid id);
         Club GetClubByName(string name);
-        Task<Club> CreateClub(Club club);
+        Task<Club> CreateClub(Club club, Member member);
     }
 }

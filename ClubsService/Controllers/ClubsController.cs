@@ -1,6 +1,7 @@
 using ClubsService.DB;
 using ClubsService.Models;
 using ClubsService.Models.DTO;
+using ClubsService.Publisher;
 using Microsoft.AspNetCore.Mvc;
 
 namespace ClubsService.Controllers
@@ -12,11 +13,13 @@ namespace ClubsService.Controllers
         private readonly ILogger<ClubsController> _logger;
         private readonly IClubRepository _clubRepository;
         private readonly IMemberRepository _memberRepository;
+        private readonly IAddClubPublisher _addClubPublisher;
 
-        public ClubsController(IClubRepository clubRepository, IMemberRepository memberRepository, ILogger<ClubsController> logger)
+        public ClubsController(IClubRepository clubRepository, IMemberRepository memberRepository, IAddClubPublisher addClubPublisher, ILogger<ClubsController> logger)
         {
             _clubRepository = clubRepository;
             _memberRepository = memberRepository;
+            _addClubPublisher = addClubPublisher;
             _logger = logger;
         }
 
@@ -54,9 +57,9 @@ namespace ClubsService.Controllers
             {
                 Name = data.Name
             };
-            var result = await _clubRepository.CreateClub(club);
-            member.ClubId = result.Id;
-            await _memberRepository.UpdateMember(member);
+            var result = await _clubRepository.CreateClub(club, member);
+
+            _addClubPublisher.Publish(result);
             return CreatedAtAction(nameof(CreateClub), result);
         }
 
